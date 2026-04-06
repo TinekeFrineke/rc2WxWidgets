@@ -12,7 +12,7 @@ struct RcRectDU
     int h = 0;
 };
 
-enum class RcControlKind
+enum class RcControlType
 {
     Unknown,
     LText,
@@ -29,7 +29,7 @@ enum class RcControlKind
 
 struct RcControl
 {
-    RcControlKind kind = RcControlKind::Unknown;
+    RcControlType type = RcControlType::Unknown;
     std::string text;      // may be empty
     std::string id;        // e.g. IDC_FOO or IDOK
     std::string winClass;  // for CONTROL lines, e.g. "SysListView32"
