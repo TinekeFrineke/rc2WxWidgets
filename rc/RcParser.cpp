@@ -145,6 +145,15 @@ static std::optional<RcControl> parseControlLine(const std::string& line)
         return c;
     }
 
+    if (c.kind == RcControlKind::ComboBox) {
+        // COMBOBOX id,x,y,w,h[,style...]
+        if (args.size() < 5) return std::nullopt;
+        c.id = trim(args[0]);
+        c.rectDU = { toInt(args[1]), toInt(args[2]), toInt(args[3]), toInt(args[4]) };
+        if (args.size() > 5) c.style = joinTail(5);
+        return c;
+    }
+
     if (c.kind == RcControlKind::Control) {
         if (args.size() < 8) return std::nullopt;
         c.text = unquote(args[0]);
