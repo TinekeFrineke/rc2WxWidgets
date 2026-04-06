@@ -11,13 +11,14 @@
 #include "ParserUtilities.h"
 #include "RcControlParser.h"
 
-static bool startsWith(const std::string& s, const char* prefix)
+namespace {
+bool startsWith(const std::string& s, const char* prefix)
 {
     const auto n = std::char_traits<char>::length(prefix);
     return s.size() >= n && s.compare(0, n, prefix) == 0;
 }
 
-static std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
+std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
 {
     while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) ++i;
     if (i >= s.size() || s[i] != '"') return std::nullopt;
@@ -30,20 +31,35 @@ static std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
             // Minimal escape handling for \" and \\.
             const char n = s[i++];
             out.push_back(n);
-        } else {
+        }
+        else {
             out.push_back(c);
         }
     }
     return out;
 }
 
-static int toInt(const std::string& s)
+int toInt(const std::string& s)
 {
     std::string t = trim(s);
     if (t.empty()) return 0;
     // RC commonly uses decimal here; be tolerant.
     return std::stoi(t, nullptr, 0);
 }
+
+std::string makeName(const std::string& rawName)
+{
+    auto tokens = Str::StrTok(rawName, "_");
+    for (auto& token : tokens)
+        if (!token.empty())
+            token = token[0] + Str::ToLower(token.substr(1));
+
+    std::string newName;
+    for (const auto& token : tokens)
+        newName += token;
+    return newName;
+}
+} // namespace
 
 RcFile RcParser::parse(std::istream& in) const
 {
@@ -57,7 +73,7 @@ RcFile RcParser::parse(std::istream& in) const
         std::string line = trim(stripLineComment(raw));
         if (line.empty()) continue;
 
-        if (!curDlg) {
+        if (curDlg == nullptr) {
             // Start of dialog:
             // IDD_SOMETHING DIALOGEX 0, 0, 170, 62
             const auto toks = Str::StrTok(line, " ");
@@ -67,7 +83,7 @@ RcFile RcParser::parse(std::istream& in) const
                 if (kwPos == std::string::npos) continue; // assume spaces
 
                 RcDialog dlg;
-                dlg.name = toks[0];
+                dlg.name = makeName(toks[0]);
                 const std::string tail = trim(line.substr(kwPos + kw.size() + 2));
                 const auto args = splitCsvRespectQuotes(tail);
                 if (args.size() >= 4) {
@@ -106,7 +122,6 @@ RcFile RcParser::parse(std::istream& in) const
         if (line == "BEGIN") {
             RcControlParser parser(*curDlg);
             parser.Parse(in);
-            out.dialogs.push_back(*curDlg);
             curDlg = nullptr;
         }
     }
