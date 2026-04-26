@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 #include "../rc/RcModel.h"
@@ -13,6 +14,6 @@ struct WxEmitResult
 class WxEmitter
 {
 public:
-    WxEmitResult emit(const RcFile& rc) const;
+    std::map<std::string, WxEmitResult> emit(const RcFile& rc) const;
 };
 

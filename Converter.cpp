@@ -39,15 +39,15 @@ void Converter::convert()
     WxEmitter emitter;
     const auto out = emitter.emit(rc);
 
+    for (const auto& entry : out)
     {
-        std::ofstream hpp(outDir / "DialogsFromRc.h", std::ios::binary);
+        std::ofstream hpp(outDir / (entry.first + ".h"), std::ios::binary);
         if (!hpp) throw std::runtime_error("Could not write DialogsFromRc.h");
-        hpp << out.header;
-    }
-    {
-        std::ofstream cpp(outDir / "DialogsFromRc.cpp", std::ios::binary);
+        hpp << entry.second.header;
+
+        std::ofstream cpp(outDir / (entry.first + ".cpp"), std::ios::binary);
         if (!cpp) throw std::runtime_error("Could not write DialogsFromRc.cpp");
-        cpp << out.source;
+        cpp << entry.second.source;
     }
 
     std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
