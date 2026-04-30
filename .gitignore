@@ -9,3 +9,5 @@
 *.exe
 *.filters
 *.user
+/Debug/
+/rc2WxWidgets/x64/Debug/

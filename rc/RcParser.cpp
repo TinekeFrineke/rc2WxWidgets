@@ -8,28 +8,37 @@
 
 #include "utilities/strutils.h"
 
-static std::string trim(std::string s)
+namespace {
+
+std::string trim(std::string s)
 {
-    auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
+    auto isSpace = [] (unsigned char c) { return std::isspace(c) != 0; };
     while (!s.empty() && isSpace(static_cast<unsigned char>(s.front()))) s.erase(s.begin());
     while (!s.empty() && isSpace(static_cast<unsigned char>(s.back()))) s.pop_back();
     return s;
 }
 
-static bool startsWith(const std::string& s, const char* prefix)
+std::string trim(std::string s, char c)
+{
+    while (!s.empty() && s.front() == c) s.erase(s.begin());
+    while (!s.empty() && s.back() == c) s.pop_back();
+    return s;
+}
+
+bool startsWith(const std::string& s, const char* prefix)
 {
     const auto n = std::char_traits<char>::length(prefix);
     return s.size() >= n && s.compare(0, n, prefix) == 0;
 }
 
-static std::string stripLineComment(const std::string& line)
+std::string stripLineComment(const std::string& line)
 {
     // RC files often use '//' comments.
     const auto p = line.find("//");
     return (p == std::string::npos) ? line : line.substr(0, p);
 }
 
-static std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
+std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
 {
     while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) ++i;
     if (i >= s.size() || s[i] != '"') return std::nullopt;
@@ -42,14 +51,15 @@ static std::optional<std::string> parseQuoted(const std::string& s, size_t& i)
             // Minimal escape handling for \" and \\.
             const char n = s[i++];
             out.push_back(n);
-        } else {
+        }
+        else {
             out.push_back(c);
         }
     }
     return out;
 }
 
-static std::vector<std::string> splitCsvRespectQuotes(const std::string& s)
+std::vector<std::string> splitCsvRespectQuotes(const std::string& s)
 {
     std::vector<std::string> out;
     std::string cur;
@@ -72,7 +82,7 @@ static std::vector<std::string> splitCsvRespectQuotes(const std::string& s)
     return out;
 }
 
-static int toInt(const std::string& s)
+int toInt(const std::string& s)
 {
     std::string t = trim(s);
     if (t.empty()) return 0;
@@ -80,27 +90,24 @@ static int toInt(const std::string& s)
     return std::stoi(t, nullptr, 0);
 }
 
-static std::string unquote(std::string s)
+std::string unquote(std::string s)
 {
     s = trim(s);
-    if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
-        s.erase(s.begin());
-        s.pop_back();
-    }
+    s = trim(s, '"');
     return s;
 }
 
-static std::optional<RcControl> parseControlLine(const std::string& line)
+std::optional<RcControl> parseControlLine(const std::string& line)
 {
     auto l = trim(line);
     if (l.empty()) return std::nullopt;
 
-    auto takeWord = [&](size_t& i) -> std::string {
+    auto takeWord = [&] (size_t& i) -> std::string {
         while (i < l.size() && std::isspace(static_cast<unsigned char>(l[i]))) ++i;
         size_t start = i;
         while (i < l.size() && !std::isspace(static_cast<unsigned char>(l[i]))) ++i;
         return l.substr(start, i - start);
-    };
+        };
 
     size_t i = 0;
     const std::string kw = takeWord(i);
@@ -128,14 +135,14 @@ static std::optional<RcControl> parseControlLine(const std::string& line)
     // CONTROL "txt",id,"class",style,x,y,w,h
     // ICON id,IDC_STATIC,x,y,w,h
 
-    auto joinTail = [&](size_t startIdx) -> std::string {
+    auto joinTail = [&] (size_t startIdx) -> std::string {
         std::ostringstream oss;
         for (size_t k = startIdx; k < args.size(); ++k) {
             if (k != startIdx) oss << ", ";
             oss << args[k];
         }
         return trim(oss.str());
-    };
+        };
 
     if (c.kind == RcControlKind::EditText) {
         if (args.size() < 5) return std::nullopt;
@@ -186,84 +193,141 @@ static std::optional<RcControl> parseControlLine(const std::string& line)
     return c;
 }
 
+bool isBegin(const std::string line)
+{
+    return trim(line) == "BEGIN";
+}
+
+bool isEnd(const std::string line)
+{
+    return trim(line) == "END";
+}
+
+std::istream& getLine(std::istream& input, std::string& line)
+{
+    std::getline(input, line);
+    line = trim(line);
+    line = trim(line, '\r');
+    return input;
+}
+
+void parseDialogContent(std::istream& input, RcDialog& dialog)
+{
+    std::string line;
+    while (getLine(input, line) && !isEnd(line)) {
+        std::cout << "parseDialogContent() line " << line << '\n';
+        auto control = parseControlLine(line);
+        if (control)
+            dialog.controls.push_back(*control);
+    }
+}
+
+namespace {
+std::string camelCasualize(const std::string& string)
+{
+    if (string.empty())
+        throw std::invalid_argument("camelCasualize: string is empty");
+    auto newName = Str::ToLower(string);
+    newName[0] = std::toupper(newName[0]);
+    return newName;
+}
+std::string beautifyDialogName(const std::string& resourceId)
+{
+    if (resourceId.empty())
+        throw std::invalid_argument("beautifyDialogName: Resource ID is empty");
+    auto tokens = Str::StrTok(resourceId, "_");
+    if (tokens.size() < 2)
+        throw std::invalid_argument("Resource ID " + resourceId + " is invalid");
+    tokens.erase(tokens.begin());
+
+    std::string name;
+    for (const auto& token : tokens)
+        name += camelCasualize(token);
+
+    return name;
+}
+} // namespace
+
+std::unique_ptr<RcDialog> createDialogFromTokens(const std::vector<std::string>& tokens, std::istream& input)
+{
+    if (tokens.size() < 6)
+        throw std::invalid_argument("Line does not have enough tokens");
+
+    auto dialog = std::make_unique<RcDialog>();
+    dialog->name = beautifyDialogName(tokens[0]);
+    dialog->rectDU = { toInt(tokens[2]), toInt(tokens[3]), toInt(tokens[4]), toInt(tokens[5]) };
+
+    std::string line;
+    while (getLine(input, line)/* && !isEnd(line)*/) {
+        std::cout << "createDialogFromTokens() line " << line << '\n';
+        if (startsWith(line, "STYLE")) {
+            auto p = line.find(' ');
+            dialog->style = trim(p == std::string::npos ? "" : line.substr(p + 1));
+            continue;
+        }
+        if (startsWith(line, "EXSTYLE")) {
+            auto p = line.find(' ');
+            dialog->exStyle = trim(p == std::string::npos ? "" : line.substr(p + 1));
+            continue;
+        }
+        if (startsWith(line, "CAPTION")) {
+            size_t i = std::string("CAPTION").size();
+            auto q = parseQuoted(line, i);
+            dialog->caption = q ? *q : "";
+            continue;
+        }
+        if (startsWith(line, "FONT")) {
+            // FONT 8, "MS Shell Dlg", ...
+            const auto args = splitCsvRespectQuotes(trim(line.substr(4)));
+            if (!args.empty()) dialog->fontPointSize = toInt(args[0]);
+            if (args.size() >= 2) dialog->fontFace = unquote(args[1]);
+            continue;
+        }
+        if (isBegin(line)) {
+            parseDialogContent(input, *dialog);
+            return dialog;;
+        }
+
+        throw std::domain_error("Invalid type: " + line);
+    }
+
+    return dialog;
+}
+
+}
+
 RcFile RcParser::parse(std::istream& in) const
 {
     RcFile out;
 
-    std::string raw;
-    RcDialog* curDlg = nullptr;
-    bool inBegin = false;
-
-    while (std::getline(in, raw)) {
-        std::string line = trim(stripLineComment(raw));
-        if (line.empty()) continue;
-
-        if (!curDlg) {
-            // Start of dialog:
-            // IDD_SOMETHING DIALOGEX 0, 0, 170, 62
-            const auto toks = Str::StrTok(line, " ");
-            if (toks.size() >= 2 && (toks[1] == "DIALOGEX" || toks[1] == "DIALOG")) {
-                const std::string& kw = toks[1];
-                const auto kwPos = line.find(" " + kw + " ");
-                if (kwPos == std::string::npos) continue; // assume spaces
-
-                RcDialog dlg;
-                dlg.name = toks[0];
-                const std::string tail = trim(line.substr(kwPos + kw.size() + 2));
-                const auto args = splitCsvRespectQuotes(tail);
-                if (args.size() >= 4) {
-                    dlg.rectDU = { toInt(args[0]), toInt(args[1]), toInt(args[2]), toInt(args[3]) };
-                }
-                out.dialogs.push_back(std::move(dlg));
-                curDlg = &out.dialogs.back();
-                continue;
-            }
-            continue;
-        }
-
-        if (!inBegin) {
-            if (startsWith(line, "STYLE")) {
-                auto p = line.find(' ');
-                curDlg->style = trim(p == std::string::npos ? "" : line.substr(p + 1));
-                continue;
-            }
-            if (startsWith(line, "EXSTYLE")) {
-                auto p = line.find(' ');
-                curDlg->exStyle = trim(p == std::string::npos ? "" : line.substr(p + 1));
-                continue;
-            }
-            if (startsWith(line, "CAPTION")) {
-                size_t i = std::string("CAPTION").size();
-                auto q = parseQuoted(line, i);
-                curDlg->caption = q ? *q : "";
-                continue;
-            }
-            if (startsWith(line, "FONT")) {
-                // FONT 8, "MS Shell Dlg", ...
-                const auto args = splitCsvRespectQuotes(trim(line.substr(4)));
-                if (!args.empty()) curDlg->fontPointSize = toInt(args[0]);
-                if (args.size() >= 2) curDlg->fontFace = unquote(args[1]);
-                continue;
-            }
-            if (line == "BEGIN") {
-                inBegin = true;
-                continue;
-            }
-            // Ignore other lines (LANGUAGE, GUIDELINES, etc) until BEGIN.
-            continue;
-        }
-
-        if (line == "END") {
-            curDlg = nullptr;
-            inBegin = false;
-            continue;
-        }
-
-        if (auto c = parseControlLine(line)) {
-            curDlg->controls.push_back(std::move(*c));
-        }
+    std::unique_ptr<RcDialog> dialog = parseDialog(in);
+    while (dialog != nullptr) {
+        out.dialogs.push_back(*dialog);
+        dialog = parseDialog(in);
     }
 
     return out;
+}
+
+std::unique_ptr<RcDialog> RcParser::parseDialog(std::istream& in) const
+{
+    std::string raw;
+    std::unique_ptr<RcDialog> curDlg;
+
+    while (getLine(in, raw)) {
+        std::cout << "RcParser::parseDialog() line " << raw << '\n';
+        std::string line = trim(stripLineComment(raw));
+        if (line.empty()) continue;
+
+        // Start of dialog:
+        // IDD_SOMETHING DIALOGEX 0, 0, 170, 62
+        const auto tokens = Str::StrTok(line, " ");
+        if (tokens.size() >= 6 && (tokens[1] == "DIALOGEX" || tokens[1] == "DIALOG")) {
+            curDlg = createDialogFromTokens(tokens, in);
+            return curDlg;
+        }
+    }
+
+    return curDlg;
 }
 

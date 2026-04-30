@@ -12,8 +12,13 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    Converter converter(argv[1], argv[2]);
-    converter.convert();
+    try {
+        Converter converter(argv[1], argv[2]);
+        converter.convert();
+    }
+    catch (std::exception& ex) {
+        std::cout << "exception: " << ex.what() << '\n';
+    }
 
     return 0;
 }

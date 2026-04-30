@@ -1,11 +1,13 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "../rc/RcModel.h"
 
 struct WxEmitResult
 {
+    std::string className;
     std::string header;
     std::string source;
 };
@@ -13,6 +15,6 @@ struct WxEmitResult
 class WxEmitter
 {
 public:
-    WxEmitResult emit(const RcFile& rc) const;
+    std::vector<WxEmitResult> emit(const RcFile& rc) const;
 };
 

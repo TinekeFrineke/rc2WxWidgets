@@ -5,8 +5,6 @@ VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rc2WxWidgets", "rc2WxWidgets.vcxproj", "{B398C144-B081-4C01-A188-E679A4A60EAD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utilities", "..\..\Combined\utilities\build\vs2022\x64\utilities.vcxproj", "{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,14 +21,6 @@ Global
 		{B398C144-B081-4C01-A188-E679A4A60EAD}.Release|x64.Build.0 = Release|x64
 		{B398C144-B081-4C01-A188-E679A4A60EAD}.Release|x86.ActiveCfg = Release|Win32
 		{B398C144-B081-4C01-A188-E679A4A60EAD}.Release|x86.Build.0 = Release|Win32
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Debug|x64.ActiveCfg = Debug|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Debug|x64.Build.0 = Debug|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Debug|x86.ActiveCfg = Debug|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Debug|x86.Build.0 = Debug|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Release|x64.ActiveCfg = Release|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Release|x64.Build.0 = Release|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Release|x86.ActiveCfg = Release|x64
-		{3F07284D-2602-3BB0-8DB0-1C7B4D44DAD4}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

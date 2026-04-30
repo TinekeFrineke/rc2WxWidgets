@@ -20,6 +20,7 @@ void Converter::convert()
 {
     namespace fs = std::filesystem;
 
+    auto currentPath(std::filesystem::current_path());
     std::string textUtf8;
     try {
         textUtf8 = readFileAsUtf8(m_input);
@@ -31,28 +32,40 @@ void Converter::convert()
 
     RcParser parser;
     std::istringstream inStream(textUtf8);
-    RcFile rc = parser.parse(inStream);
+    RcFile rc;
+    try {
+        rc = parser.parse(inStream);
+    }
+    catch (const std::exception& e) {
+        std::cout << "Parsing failed: " << e.what() << "\n";
+        return;
+    }
 
     fs::path outDir(m_output);
     fs::create_directories(outDir);
 
     WxEmitter emitter;
-    const auto out = emitter.emit(rc);
+    const auto result = emitter.emit(rc);
 
+    for (const auto& out : result)
     {
-        std::ofstream hpp(outDir / "DialogsFromRc.h", std::ios::binary);
-        if (!hpp) throw std::runtime_error("Could not write DialogsFromRc.h");
-        hpp << out.header;
-    }
-    {
-        std::ofstream cpp(outDir / "DialogsFromRc.cpp", std::ios::binary);
-        if (!cpp) throw std::runtime_error("Could not write DialogsFromRc.cpp");
-        cpp << out.source;
+        std::string outHeaderFile = out.className + ".h";
+        {
+            std::ofstream hpp(outDir / outHeaderFile, std::ios::binary);
+            if (!hpp) throw std::runtime_error("Could not write " + outHeaderFile);
+            hpp << out.header;
+        }
+        std::string outSourceFile = out.className + ".cpp";
+        {
+            std::ofstream cpp(outDir / outSourceFile, std::ios::binary);
+            if (!cpp) throw std::runtime_error("Could not write " + outSourceFile);
+            cpp << out.source;
+        }
+        std::cout << "Wrote: " << (outDir / outHeaderFile).string() << "\n";
+        std::cout << "Wrote: " << (outDir / outSourceFile).string() << "\n";
     }
 
     std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
-    std::cout << "Wrote: " << (outDir / "DialogsFromRc.h").string() << "\n";
-    std::cout << "Wrote: " << (outDir / "DialogsFromRc.cpp").string() << "\n";
 
 
 }
