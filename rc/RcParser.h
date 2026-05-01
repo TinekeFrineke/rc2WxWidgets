@@ -5,6 +5,8 @@
 
 #include "RcModel.h"
 
+namespace wxConvert {
+
 struct RcDialog;
 
 class RcParser
@@ -15,3 +17,4 @@ public:
     std::unique_ptr<RcDialog> parseDialog(std::istream& in) const;
 };
 
+} // namespace wxConvert

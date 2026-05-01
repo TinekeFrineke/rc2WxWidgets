@@ -10,6 +10,8 @@
 #include "text/TextFile.h"
 #include "wx/WxEmitter.h"
 
+namespace wxConvert {
+
 Converter::Converter(std::string input, std::string output)
     : m_input(std::move(input))
     , m_output(std::move(output))
@@ -24,7 +26,8 @@ void Converter::convert()
     std::string textUtf8;
     try {
         textUtf8 = readFileAsUtf8(m_input);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cout << "Input read failed: " << e.what() << "\n";
         return;
     }
@@ -69,3 +72,5 @@ void Converter::convert()
 
 
 }
+
+} // namespace wxConvert

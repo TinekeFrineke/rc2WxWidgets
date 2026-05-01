@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "../rc/RcModel.h"
+#include "RcModel.h"
+
+namespace wxConvert {
 
 struct WxEmitResult
 {
@@ -15,6 +17,7 @@ struct WxEmitResult
 class WxEmitter
 {
 public:
-    std::vector<WxEmitResult> emit(const RcFile& rc) const;
+    WxEmitResult emit(const RcDialog& rc) const;
 };
 
+} // namespace wxConvert

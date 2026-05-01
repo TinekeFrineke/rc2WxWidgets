@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace wxConvert {
+
 class Converter
 {
 public:
@@ -15,3 +17,4 @@ private:
     std::string m_output;
 };
 
+} // namespace wxConvert

@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     }
 
     try {
-        Converter converter(argv[1], argv[2]);
+        wxConvert::Converter converter(argv[1], argv[2]);
         converter.convert();
     }
     catch (std::exception& ex) {

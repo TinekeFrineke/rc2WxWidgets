@@ -8,6 +8,7 @@
 
 #include "utilities/strutils.h"
 
+namespace wxConvert {
 namespace {
 
 std::string trim(std::string s)
@@ -331,3 +332,4 @@ std::unique_ptr<RcDialog> RcParser::parseDialog(std::istream& in) const
     return curDlg;
 }
 
+} // namespace wxConvert
