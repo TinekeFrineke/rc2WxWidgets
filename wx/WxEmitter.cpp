@@ -113,34 +113,34 @@ WxEmitResult WxEmitter::emit(const RcDialog& dialog) const
         const std::string idExpr = "wxID_ANY"; // safer default; user can map later
 
         switch (ctl.kind) {
-            case RcControlKind::LText:
-            case RcControlKind::CText:
-            case RcControlKind::RText:
+            case RcControl::Type::LText:
+            case RcControl::Type::CText:
+            case RcControl::Type::RText:
                 c << "    new wxStaticText(this, " << idExpr << ", " << cppStringLiteral(ctl.text)
                     << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << "));\n";
                 break;
-            case RcControlKind::GroupBox:
+            case RcControl::Type::GroupBox:
                 c << "    new wxStaticBox(this, " << idExpr << ", " << cppStringLiteral(ctl.text)
                     << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << "));\n";
                 break;
-            case RcControlKind::EditText:
+            case RcControl::Type::EditText:
                 c << "    new wxTextCtrl(this, " << idExpr << ", wxEmptyString"
                     << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << ")"
                     << ", " << wxTextCtrlStyleFromRc(ctl.style) << ");\n";
                 break;
-            case RcControlKind::ComboBox:
+            case RcControl::Type::ComboBox:
                 c << "    new wxComboBox(this, " << idExpr << ", wxEmptyString"
                     << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << "));\n";
                 break;
-            case RcControlKind::PushButton:
-            case RcControlKind::DefPushButton:
+            case RcControl::Type::PushButton:
+            case RcControl::Type::DefPushButton:
                 c << "    {\n";
                 c << "        auto* btn = new wxButton(this, " << idExpr << ", " << cppStringLiteral(ctl.text)
                     << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << "));\n";
-                if (ctl.kind == RcControlKind::DefPushButton) c << "        btn->SetDefault();\n";
+                if (ctl.kind == RcControl::Type::DefPushButton) c << "        btn->SetDefault();\n";
                 c << "    }\n";
                 break;
-            case RcControlKind::Control:
+            case RcControl::Type::Control:
                 if (ctl.winClass == "SysListView32") {
                     c << "    new wxListCtrl(this, " << idExpr
                         << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << ")"
@@ -160,7 +160,7 @@ WxEmitResult WxEmitter::emit(const RcDialog& dialog) const
                         << ", DUPoint(" << r.left << ", " << r.top << "), DUSize(" << r.width << ", " << r.height << "));\n";
                 }
                 break;
-            case RcControlKind::Icon:
+            case RcControl::Type::Icon:
                 c << "    // TODO: ICON " << cppStringLiteral(ctl.id) << " at " << r.left << "," << r.top << "\n";
                 break;
             default:

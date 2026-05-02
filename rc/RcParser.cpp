@@ -118,16 +118,16 @@ std::optional<RcControl> parseControlLine(const std::string& line)
     const auto args = splitCsvRespectQuotes(rest);
 
     RcControl c;
-    if (kw == "LTEXT") c.kind = RcControlKind::LText;
-    else if (kw == "CTEXT") c.kind = RcControlKind::CText;
-    else if (kw == "RTEXT") c.kind = RcControlKind::RText;
-    else if (kw == "GROUPBOX") c.kind = RcControlKind::GroupBox;
-    else if (kw == "EDITTEXT") c.kind = RcControlKind::EditText;
-    else if (kw == "COMBOBOX") c.kind = RcControlKind::ComboBox;
-    else if (kw == "PUSHBUTTON") c.kind = RcControlKind::PushButton;
-    else if (kw == "DEFPUSHBUTTON") c.kind = RcControlKind::DefPushButton;
-    else if (kw == "ICON") c.kind = RcControlKind::Icon;
-    else if (kw == "CONTROL") c.kind = RcControlKind::Control;
+    if (kw == "LTEXT") c.kind = RcControl::Type::LText;
+    else if (kw == "CTEXT") c.kind = RcControl::Type::CText;
+    else if (kw == "RTEXT") c.kind = RcControl::Type::RText;
+    else if (kw == "GROUPBOX") c.kind = RcControl::Type::GroupBox;
+    else if (kw == "EDITTEXT") c.kind = RcControl::Type::EditText;
+    else if (kw == "COMBOBOX") c.kind = RcControl::Type::ComboBox;
+    else if (kw == "PUSHBUTTON") c.kind = RcControl::Type::PushButton;
+    else if (kw == "DEFPUSHBUTTON") c.kind = RcControl::Type::DefPushButton;
+    else if (kw == "ICON") c.kind = RcControl::Type::Icon;
+    else if (kw == "CONTROL") c.kind = RcControl::Type::Control;
     else return std::nullopt;
 
     // The file you showed sticks to a small set of shapes. Support those first.
@@ -145,7 +145,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         return trim(oss.str());
         };
 
-    if (c.kind == RcControlKind::EditText) {
+    if (c.kind == RcControl::Type::EditText) {
         if (args.size() < 5) return std::nullopt;
         c.id = trim(args[0]);
         c.rectDU = { toInt(args[1]), toInt(args[2]), toInt(args[3]), toInt(args[4]) };
@@ -153,7 +153,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         return c;
     }
 
-    if (c.kind == RcControlKind::ComboBox) {
+    if (c.kind == RcControl::Type::ComboBox) {
         // COMBOBOX id,x,y,w,h[,style...]
         if (args.size() < 5) return std::nullopt;
         c.id = trim(args[0]);
@@ -162,7 +162,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         return c;
     }
 
-    if (c.kind == RcControlKind::Control) {
+    if (c.kind == RcControl::Type::Control) {
         if (args.size() < 8) return std::nullopt;
         c.text = unquote(args[0]);
         c.id = trim(args[1]);
@@ -176,7 +176,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         return c;
     }
 
-    if (c.kind == RcControlKind::Icon) {
+    if (c.kind == RcControl::Type::Icon) {
         if (args.size() < 6) return std::nullopt;
         c.id = trim(args[0]); // icon resource id
         c.text = trim(args[1]); // usually IDC_STATIC

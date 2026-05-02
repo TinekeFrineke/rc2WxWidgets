@@ -8,24 +8,30 @@
 
 namespace wxConvert {
 
-enum class RcControlKind
-{
-    Unknown,
-    LText,
-    CText,
-    RText,
-    GroupBox,
-    EditText,
-    ComboBox,
-    PushButton,
-    DefPushButton,
-    Icon,
-    Control, // generic CONTROL line with explicit window class
-};
-
 struct RcControl
 {
-    RcControlKind kind = RcControlKind::Unknown;
+    enum class Type
+    {
+        Unknown,
+        LText,
+        CText,
+        RText,
+        GroupBox,
+        EditText,
+        ComboBox,
+        PushButton,
+        DefPushButton,
+        Icon,
+        Control, // generic CONTROL line with explicit window class
+    };
+
+    RcControl() = default;
+    RcControl(const RcControl& other) = default;
+    RcControl(RcControl&& other) = default;
+    RcControl& operator=(const RcControl& other) = default;
+    RcControl& operator=(RcControl&& other) = default;
+
+    Type kind = Type::Unknown;
     std::string text;      // may be empty
     std::string id;        // e.g. IDC_FOO or IDOK
     std::string winClass;  // for CONTROL lines, e.g. "SysListView32"

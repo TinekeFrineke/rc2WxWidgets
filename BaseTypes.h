@@ -9,9 +9,9 @@ struct RcRectDU
     int width = 0;
     int height = 0;
 
-    int right() const { return left + width; }
-    int bottom() const { return top + height; }
-    int surface() const { return width * height; }
+    constexpr int right() const noexcept { return left + width; }
+    constexpr int bottom() const noexcept  { return top + height; }
+    constexpr int surface() const noexcept  { return width * height; }
 };
 
 inline bool isInside(const RcRectDU& outline, int x, int y)
