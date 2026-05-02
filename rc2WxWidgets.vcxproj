@@ -140,6 +140,7 @@
     <ClCompile Include="RcModel.cpp" />
     <ClCompile Include="rc\RcParser.cpp" />
     <ClCompile Include="text\TextFile.cpp" />
+    <ClCompile Include="wx\DialogInterpreter.cpp" />
     <ClCompile Include="wx\WxEmitter.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +149,7 @@
     <ClInclude Include="RcModel.h" />
     <ClInclude Include="rc\RcParser.h" />
     <ClInclude Include="text\TextFile.h" />
+    <ClInclude Include="wx\DialogInterpreter.h" />
     <ClInclude Include="wx\WxEmitter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

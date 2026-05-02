@@ -8,6 +8,7 @@
 
 #include "rc/RcParser.h"
 #include "text/TextFile.h"
+#include "wx/DialogInterpreter.h"
 #include "wx/WxEmitter.h"
 
 namespace wxConvert {
@@ -44,32 +45,33 @@ void Converter::convert()
         return;
     }
 
+    std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
+
     fs::path outDir(m_output);
     fs::create_directories(outDir);
 
-    WxEmitter emitter;
-    const auto result = emitter.emit(rc);
+    for (const auto& rcDialog : rc.dialogs) {
+        auto wxDialog = dialogInterpreter::interpret(rcDialog);
 
-    for (const auto& out : result)
-    {
-        std::string outHeaderFile = out.className + ".h";
+        WxEmitter emitter;
+        const auto result = emitter.emit(rcDialog);
+
+        std::string outHeaderFile = result.className + ".h";
         {
             std::ofstream hpp(outDir / outHeaderFile, std::ios::binary);
             if (!hpp) throw std::runtime_error("Could not write " + outHeaderFile);
-            hpp << out.header;
+            hpp << result.header;
         }
-        std::string outSourceFile = out.className + ".cpp";
+        std::string outSourceFile = result.className + ".cpp";
         {
             std::ofstream cpp(outDir / outSourceFile, std::ios::binary);
             if (!cpp) throw std::runtime_error("Could not write " + outSourceFile);
-            cpp << out.source;
+            cpp << result.source;
         }
         std::cout << "Wrote: " << (outDir / outHeaderFile).string() << "\n";
         std::cout << "Wrote: " << (outDir / outSourceFile).string() << "\n";
     }
-
-    std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
-
+    std::cout << "Wrote " << rc.dialogs.size() << " dialogs\n";
 
 }
 
