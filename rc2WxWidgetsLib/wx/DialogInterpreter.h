@@ -10,6 +10,16 @@ namespace wxConvert {
 
 struct Control
 {
+    enum class Type
+    {
+        Unknown,
+        StaticText,
+        Editable,
+        Line,
+        GroupBox,
+        Control,
+    };
+
     Control(const RcControl& control);
     ~Control();
 
@@ -25,6 +35,7 @@ struct Control
 #endif
 
     RcControl m_control;
+    Type m_type;
     std::vector<Control> m_children;
 };
 

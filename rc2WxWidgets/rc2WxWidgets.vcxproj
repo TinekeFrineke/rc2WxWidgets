@@ -108,13 +108,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Projects\Combined\utilities\interface;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rc2WxWidgetsLib;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\Projects\Combined\utilities\bin\vs2022\$(PlatformName)\$(Configuration)\utilities.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)rc2WxWidgetsLib\$(Platform)\$(Configuration)\rc2WxWidgetsLib.lib;C:\Projects\Combined\utilities\bin\vs2022\$(PlatformName)\$(Configuration)\utilities.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,32 +125,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Projects\Combined\utilities\interface;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rc2WxWidgetsLib;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\Projects\Combined\utilities\bin\vs2022\$(PlatformName)\$(Configuration)\utilities.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)rc2WxWidgetsLib\$(Platform)\$(Configuration)\rc2WxWidgetsLib.lib;C:\Projects\Combined\utilities\bin\vs2022\$(PlatformName)\$(Configuration)\utilities.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Converter.cpp" />
     <ClCompile Include="rc2WxWidgets.cpp" />
-    <ClCompile Include="RcModel.cpp" />
-    <ClCompile Include="rc\RcParser.cpp" />
-    <ClCompile Include="text\TextFile.cpp" />
-    <ClCompile Include="wx\DialogInterpreter.cpp" />
-    <ClCompile Include="wx\WxEmitter.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Converter.h" />
-    <ClInclude Include="BaseTypes.h" />
-    <ClInclude Include="RcModel.h" />
-    <ClInclude Include="rc\RcParser.h" />
-    <ClInclude Include="text\TextFile.h" />
-    <ClInclude Include="wx\DialogInterpreter.h" />
-    <ClInclude Include="wx\WxEmitter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
