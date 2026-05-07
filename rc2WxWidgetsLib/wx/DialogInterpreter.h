@@ -25,14 +25,8 @@ struct Control
 
     Control(Control&&) noexcept = default;
     Control& operator=(Control&&) noexcept = default;
-#define TRY_CHEAP
-#ifdef TRY_CHEAP
-    Control(const Control&) = delete;
-    Control& operator=(const Control&) = delete;
-#else
     Control(const Control&) = default;
     Control& operator=(const Control&) = default;
-#endif
 
     RcControl m_control;
     Type m_type;

@@ -24,6 +24,8 @@ Control::Type toType(const RcControl::Type& rcType)
     case RcControl::Type::Icon:
     case RcControl::Type::Control:
         return Control::Type::Control;
+    case RcControl::Type::Line:
+        return Control::Type::Line;
     default:
         throw std::invalid_argument("Unknown RcControl::Type");
     }
@@ -49,6 +51,31 @@ namespace dialogInterpreter {
 
 namespace {
 
+bool addNestedControl(Control& parent, const Control& child)
+{
+    if (!parent.m_children.empty())
+        for (auto& nested : parent.m_children)
+            if (addNestedControl(nested, child))
+                return true;
+
+    if (isInside(parent.m_control.rectDU, child.m_control.rectDU)) {
+        parent.m_children.push_back(child);
+        return true;
+    }
+    return false;
+}
+
+bool addNestedControl(std::vector<Control>::iterator start,
+                      std::vector<Control>::iterator end,
+                      const Control& child)
+{
+    for (auto it = start; it != end; ++it) {
+        if (addNestedControl(*it, child))
+            return true;
+    }
+    return false;
+}
+
 void nestGroupBoxes(std::vector<Control>& groupBoxes)
 {
     const size_t n = groupBoxes.size();
@@ -56,52 +83,18 @@ void nestGroupBoxes(std::vector<Control>& groupBoxes)
         return;
 
     // Move input into indexed storage to avoid erases while preserving order.
-    std::vector<Control> nodes;
-    nodes.reserve(n);
-    for (auto& g : groupBoxes)
-        nodes.push_back(std::move(g));
-    groupBoxes.clear();
-
-    // Order indices by ascending area (smallest first).
-    std::vector<size_t> order(n);
-    for (size_t i = 0; i < n; ++i) order[i] = i;
-    std::sort(order.begin(), order.end(), [&nodes](size_t a, size_t b) {
-        return nodes[a].m_control.rectDU.surface() < nodes[b].m_control.rectDU.surface();
+    std::sort(groupBoxes.begin(), groupBoxes.end(), [] (const Control& lhs, const Control& rhs) {
+        return lhs.m_control.rectDU.surface() < rhs.m_control.rectDU.surface();
     });
 
-    // For each node, find the tightest (first) containing parent among larger nodes.
-    std::vector<int> parentIndex(n, -1);
-    for (size_t k = 0; k < n; ++k) {
-        size_t i = order[k];
-        for (size_t kk = k + 1; kk < n; ++kk) {
-            size_t j = order[kk];
-            if (isInside(nodes[j].m_control.rectDU, nodes[i].m_control.rectDU)) {
-                parentIndex[i] = static_cast<int>(j);
-                break;
-            }
+    auto currentBox = groupBoxes.begin();
+    while (currentBox != groupBoxes.end()) {
+        if (addNestedControl(std::next(currentBox), groupBoxes.end(), *currentBox)) {
+            currentBox = groupBoxes.erase(currentBox);
         }
-    }
-
-    // Collect children indices per parent.
-    std::vector<std::vector<size_t>> childrenIdx(n);
-    for (size_t i = 0; i < n; ++i) {
-        if (parentIndex[i] != -1)
-            childrenIdx[parentIndex[i]].push_back(i);
-    }
-
-    // Attach children bottom-up so each node has its subtree before being moved into its parent.
-    for (size_t k = 0; k < n; ++k) {
-        size_t idx = order[k];
-        for (size_t childIdx : childrenIdx[idx]) {
-            nodes[idx].m_children.push_back(std::move(nodes[childIdx]));
+        else {
+            ++currentBox;
         }
-    }
-
-    // Collect top-level nodes (those without a parent). Keep large-first order.
-    for (auto it = order.rbegin(); it != order.rend(); ++it) {
-        size_t i = *it;
-        if (parentIndex[i] == -1)
-            groupBoxes.push_back(std::move(nodes[i]));
     }
 }
 
@@ -127,10 +120,10 @@ std::vector<Control> aggregateGroupBoxes(std::vector<RcControl>&& controls)
 
     for (const auto& control : controls) {
         if (control.kind == RcControl::Type::GroupBox) {
-            groupBoxes.push_back(Control(control));
+            groupBoxes.push_back(std::move(Control(control)));
         }
         else {
-            commonControls.push_back(Control(control));
+            commonControls.push_back(std::move(Control(control)));
         }
     }
 
@@ -157,59 +150,52 @@ std::vector<Control> aggregateGroupBoxes(std::vector<RcControl>&& controls)
     return commonControls;
 }
 
-std::vector<Control> aggregateLines(std::vector<Control>&& controls)
+std::vector<Control> aggregateLines(std::vector<Control> controls)
 {
-    std::sort(controls.begin(), controls.end(), [](const Control& a, const Control& b) {
-        return a.m_control.rectDU.top < b.m_control.rectDU.top;
-              });
-
-    // Now the controls are sorted top to bottom. Filter out "other" lines.
-    std::vector<Control> lineCandidates;
-    std::vector<Control> otherControls;
+    // aggregate groupboxes first
     for (auto& control : controls) {
-        if (control.m_type == Control::Type::StaticText || control.m_type == Control::Type::Editable)
-            lineCandidates.push_back(std::move(control));
-        else
-            otherControls.push_back(std::move(control));
+        if (control.m_type == Control::Type::GroupBox)
+            control.m_children = aggregateLines(std::move(control.m_children));
     }
 
-    // We can identify lines by grouping controls with overlapping top coordinates.
+    // sort from top to bottom
+    std::sort(controls.begin(), controls.end(), [](const Control& a, const Control& b) {
+        return a.m_control.rectDU.top < b.m_control.rectDU.top;
+    });
 
-    //enum class State { WaitingStatic, WaitingText } state = State::WaitingStatic;
-    //auto iterator = controls.begin();
-    //while (iterator != controls.end()) {
-    //    if (iterator->m_type == Control::Type::GroupBox) {
-    //        aggregateLines(std::move(iterator->m_children));
-    //        // Skip group boxes, they are handled separately.
-    //        ++iterator;
-    //        continue;
-    //    }
-    //    if (iterator->m_type == Control::Type::StaticText) {
-    //        state = State::WaitingText;
-    //        // Skip non-static text controls, lines start with static.
-    //        ++iterator;
-    //        continue;
-    //    }
+    // Now the controls are sorted top to bottom. Filter out "other" lines.
+    std::vector<Control> result;
+    while (!controls.empty()) {
+        if (controls.size() == 1) {
+            result.push_back(std::move(controls.front()));
+            return result;
+        }
 
-    //    // See whether we have a static followed by a line:
-    //    if (iterator->m_type == Control::Type::Editable
-    //        && heightOverlaps(iterator->m_control.rectDU, nextIter->m_control.rectDU)) {
-    //        // We have a line, aggregate it:
-    //        Control lineControl{ RcControl() };
-    //        lineControl.m_type = Control::Type::Line;
-    //        lineControl.m_children.push_back(std::move(*iterator));
-    //        lineControl.m_children.push_back(std::move(*nextIter));
-    //        iterator = controls.erase(iterator);
-    //        nextIter = controls.erase(nextIter);
-    //        controls.insert(iterator, std::move(lineControl));
-    //    }
-    //    else {
-    //        // No line, move on.
-    //        ++iterator;
-    //    }
-    //}
+        std::vector<Control> lineCandidates;
+        // start with the highest control
+        lineCandidates.push_back(std::move(controls.front()));
+        auto& candidate = lineCandidates.front();
+        auto candidateInterval = verticalInterval(candidate.m_control.rectDU);
+        auto nextCandidate = controls.erase(controls.begin());
+        RcRectDU lineRect = candidate.m_control.rectDU;
+        while (nextCandidate != controls.end() && overlap(verticalInterval(nextCandidate->m_control.rectDU), candidateInterval) > 0.75) {
+            lineRect.add(nextCandidate->m_control.rectDU);
+            lineCandidates.push_back(std::move(*nextCandidate));
+            nextCandidate = controls.erase(nextCandidate);
+        }
 
-    return controls;
+        if (lineCandidates.size() >= 2) {
+            // aggregate line candidates into a single line control
+            Control lineControl{ RcControl{ RcControl::Type::Line, lineRect } };
+            lineControl.m_children = std::move(lineCandidates);
+            result.push_back(std::move(lineControl));
+        }
+        else {
+            result.push_back(std::move(lineCandidates.front()));
+        }
+    }
+
+    return result;
 }
 } // namespace
 

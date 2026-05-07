@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rc2WxWidgets", "rc2WxWidgets\rc2WxWidgets.vcxproj", "{B398C144-B081-4C01-A188-E679A4A60EAD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A94CEA6A-ACCF-4EF1-84A4-419A2C787181} = {A94CEA6A-ACCF-4EF1-84A4-419A2C787181}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rc2WxWidgetsTest", "..\rc2WxWidgetsTest\rc2WxWidgetsTest.vcxproj", "{24A3ADAD-C320-4ADF-81BF-0E66D124BCD8}"
 EndProject

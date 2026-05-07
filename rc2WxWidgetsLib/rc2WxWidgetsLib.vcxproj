@@ -153,6 +153,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RcModel.h" />
     <ClInclude Include="rc\RcParser.h" />
+    <ClInclude Include="text\TextFile.h" />
     <ClInclude Include="wx\DialogInterpreter.h" />
     <ClInclude Include="wx\WxEmitter.h" />
   </ItemGroup>
@@ -160,6 +161,7 @@
     <ClCompile Include="Converter.cpp" />
     <ClCompile Include="RcModel.cpp" />
     <ClCompile Include="rc\RcParser.cpp" />
+    <ClCompile Include="text\TextFile.cpp" />
     <ClCompile Include="wx\DialogInterpreter.cpp" />
     <ClCompile Include="wx\WxEmitter.cpp" />
   </ItemGroup>

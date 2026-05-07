@@ -10,5 +10,6 @@
 *.filters
 *.user
 /Debug/
-/rc2WxWidgets/x64/Debug/
+/rc2WxWidgets/x64/
 /packages/
+/rc2WxWidgetsLib/x64/
