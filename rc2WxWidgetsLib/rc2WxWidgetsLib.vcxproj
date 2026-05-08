@@ -154,6 +154,7 @@
     <ClInclude Include="RcModel.h" />
     <ClInclude Include="rc\RcParser.h" />
     <ClInclude Include="text\TextFile.h" />
+    <ClInclude Include="wx\Control.h" />
     <ClInclude Include="wx\DialogInterpreter.h" />
     <ClInclude Include="wx\WxEmitter.h" />
   </ItemGroup>

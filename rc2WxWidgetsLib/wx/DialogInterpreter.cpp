@@ -18,13 +18,13 @@ Control::Type toType(const RcControl::Type& rcType)
         return Control::Type::StaticText;
     case RcControl::Type::EditText:
     case RcControl::Type::ComboBox:
-        return Control::Type::Editable;
+        return Control::Type::ComboBox;
     case RcControl::Type::PushButton:
     case RcControl::Type::DefPushButton:
     case RcControl::Type::Icon:
     case RcControl::Type::Control:
         return Control::Type::Control;
-    case RcControl::Type::Line:
+    case RcControl::Type::Other:
         return Control::Type::Line;
     default:
         throw std::invalid_argument("Unknown RcControl::Type");
@@ -186,7 +186,7 @@ std::vector<Control> aggregateLines(std::vector<Control> controls)
 
         if (lineCandidates.size() >= 2) {
             // aggregate line candidates into a single line control
-            Control lineControl{ RcControl{ RcControl::Type::Line, lineRect } };
+            Control lineControl{ RcControl{ RcControl::Type::Other, lineRect } };
             lineControl.m_children = std::move(lineCandidates);
             result.push_back(std::move(lineControl));
         }
@@ -199,14 +199,16 @@ std::vector<Control> aggregateLines(std::vector<Control> controls)
 }
 } // namespace
 
-std::vector<Control> interpret(const RcDialog& rcDialog)
+Dialog interpret(const RcDialog& rcDialog)
 {
-//    auto dialog(rcDialog);
+    auto dialog(rcDialog);
     auto controls(rcDialog.controls);
 
     auto aggregatedControls = aggregateGroupBoxes(std::move(controls));
     aggregatedControls = aggregateLines(std::move(aggregatedControls));
-    return aggregatedControls;
+    return { .name = rcDialog.name, .rectDU = rcDialog.rectDU, .style = rcDialog.style,
+        .exStyle = rcDialog.exStyle, .caption = rcDialog.caption, .fontPointSize = rcDialog.fontPointSize,
+        .fontFace = rcDialog.fontFace, .controls = std::move(aggregatedControls) };
 }
 
 } // namespace dialogInterpreter

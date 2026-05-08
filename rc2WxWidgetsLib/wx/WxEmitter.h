@@ -5,6 +5,8 @@
 
 #include "RcModel.h"
 
+#include "Control.h"
+
 namespace wxConvert {
 
 struct WxEmitResult
@@ -17,7 +19,7 @@ struct WxEmitResult
 class WxEmitter
 {
 public:
-    WxEmitResult emit(const RcDialog& rc) const;
+    WxEmitResult emit(const Dialog& rc) const;
 };
 
 } // namespace wxConvert

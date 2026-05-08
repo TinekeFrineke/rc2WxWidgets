@@ -23,7 +23,7 @@ struct RcControl
         DefPushButton,
         Icon,
         Control, // generic CONTROL line with explicit window class
-        Line, // synthetic control representing a line of controls (e.g. a row in a grid)
+        Other, // synthetic control representing a line of controls (e.g. a row in a grid)
     };
 
     RcControl(Type type, RcRectDU rectDU) : kind(type), rectDU(rectDU) {}

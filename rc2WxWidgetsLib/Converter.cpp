@@ -54,7 +54,7 @@ void Converter::convert()
         auto wxDialog = dialogInterpreter::interpret(rcDialog);
 
         WxEmitter emitter;
-        const auto result = emitter.emit(rcDialog);
+        const auto result = emitter.emit(wxDialog);
 
         std::string outHeaderFile = result.className + ".h";
         {
