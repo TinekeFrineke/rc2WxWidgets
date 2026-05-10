@@ -113,6 +113,28 @@ CodeBuilder& createEditText(const Control& ctl, const std::string& parent, CodeB
     return c;
 }
 
+CodeBuilder& createListview(const Control& ctl, const std::string& parent, CodeBuilder& c)
+{
+    c.stream() << c.pad() << "auto listCtrl = new wxListCtrl(this, " << idExpr
+        << ", wxDefaultPosition, wxDefaultSize"
+        << ", " << wxListCtrlStyleFromRc(ctl.m_control.style) << ");\n";
+    c.stream() << c.pad() << parent << "->Add(listCtrl, 1, wxEXPAND | wxALL, 5);\n";
+    return c;
+}
+
+CodeBuilder& createRadioButton(const Control& ctl, const std::string& parent, CodeBuilder& c)
+{
+    c.stream() << c.pad() << "auto radioBtn = new wxRadioButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << ");\n";
+    c.stream() << c.pad() << parent << "->Add(radioBtn);\n";
+    return c;
+}
+
+CodeBuilder& createComboBox(const Control& ctl, const std::string& parent, CodeBuilder& builder)
+{
+    builder.stream() << builder.pad() << parent << "->Add(new wxComboBox(this, " << idExpr << ", wxEmptyString));\n";
+    return builder;
+}
+
 CodeBuilder& createLine(const Control& ctl, const std::string& parent, CodeBuilder& builder)
 {
     builder.stream() << builder.pad() << "{\n";
@@ -142,31 +164,23 @@ CodeBuilder& createControl(const Control& ctl, const std::string& parent, CodeBu
             return createLine(ctl, parent, builder);
         case Control::Type::EditText:
             return createEditText(ctl, parent, builder);
-            break;
         case Control::Type::ComboBox:
-            builder.stream() << builder.pad() << parent << "->Add(new wxComboBox(this, " << idExpr << ", wxEmptyString));\n";
-            break;
+            return createComboBox(ctl, parent, builder);
         case Control::Type::PushButton:
             return createButton(ctl, parent, builder);
-        case Control::Type::Control:
-            if (ctl.m_control.winClass == "SysListView32") {
-                builder.stream() << builder.pad() << parent << "->Add(new wxListCtrl(this, " << idExpr
-                    << ", wxDefaultPosition, wxDefaultSize"
-                    << ", " << wxListCtrlStyleFromRc(ctl.m_control.style) << "));\n";
-            }
-            else if (ctl.m_control.winClass == "SysTabControl32") {
-                builder.stream() << builder.pad() << parent << "->Add(new wxNotebook(this, " << idExpr << "));\n";
-            }
-            else if (ctl.m_control.winClass == "Button" && containsToken(ctl.m_control.style, "BS_AUTORADIOBUTTON")) {
-                builder.stream() << builder.pad() << parent << "->Add(new wxRadioButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << "));\n";
-            }
-            else {
-                builder.stream() << builder.pad() << "// TODO: CONTROL class " << cppStringLiteral(ctl.m_control.winClass) << "\n";
-                builder.stream() << builder.pad() << parent << "->Add(new wxWindow(this, " << idExpr << "));\n";
-            }
+        case Control::Type::ListView:
+            return createListview(ctl, parent, builder);
+        case Control::Type::RadioButton:
+            return createRadioButton(ctl, parent, builder);
+        case Control::Type::TabControl:
+            builder.stream() << builder.pad() << parent << "->Add(new wxNotebook(this, " << idExpr << "));\n";
             break;
         case Control::Type::Icon:
             builder.stream() << builder.pad() << "// TODO: ICON " << cppStringLiteral(ctl.m_control.id) << "\n";
+            break;
+        case Control::Type::Control:
+            builder.stream() << builder.pad() << "// TODO: CONTROL class " << cppStringLiteral(ctl.m_control.winClass) << "\n";
+            builder.stream() << builder.pad() << parent << "->Add(new wxWindow(this, " << idExpr << "));\n";
             break;
         default:
             throw std::invalid_argument("Unknown control type");

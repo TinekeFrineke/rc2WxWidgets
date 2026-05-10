@@ -21,7 +21,10 @@ struct Control
         Line,
         GroupBox,
         Control,
-        Icon
+        Icon,
+        ListView,
+        TabControl,
+        RadioButton
     };
 
     Control(const RcControl& control);

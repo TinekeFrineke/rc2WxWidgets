@@ -7,29 +7,37 @@
 namespace wxConvert {
 
 namespace {
-Control::Type toType(const RcControl::Type& rcType)
+Control::Type toType(const RcControl& rcControl)
 {
-    switch (rcType) {
-    case RcControl::Type::GroupBox:
-        return Control::Type::GroupBox;
-    case RcControl::Type::LText:
-    case RcControl::Type::CText:
-    case RcControl::Type::RText:
-        return Control::Type::StaticText;
-    case RcControl::Type::EditText:
-        return Control::Type::EditText;
-    case RcControl::Type::ComboBox:
-        return Control::Type::ComboBox;
-    case RcControl::Type::PushButton:
-    case RcControl::Type::DefPushButton:
-        return Control::Type::PushButton;
-    case RcControl::Type::Icon:
-    case RcControl::Type::Control:
-        return Control::Type::Control;
-    case RcControl::Type::Other:
-        return Control::Type::Line;
-    default:
-        throw std::invalid_argument("Unknown RcControl::Type");
+    switch (rcControl.kind) {
+        case RcControl::Type::GroupBox:
+            return Control::Type::GroupBox;
+        case RcControl::Type::LText:
+        case RcControl::Type::CText:
+        case RcControl::Type::RText:
+            return Control::Type::StaticText;
+        case RcControl::Type::EditText:
+            return Control::Type::EditText;
+        case RcControl::Type::ComboBox:
+            return Control::Type::ComboBox;
+        case RcControl::Type::PushButton:
+        case RcControl::Type::DefPushButton:
+            return Control::Type::PushButton;
+        case RcControl::Type::Icon:
+            return Control::Type::Icon;
+        case RcControl::Type::Control:
+            if (rcControl.winClass == "SysListView32")
+                return Control::Type::ListView;
+            else if (rcControl.winClass == "SysTabControl32")
+                return Control::Type::TabControl;
+            else if (rcControl.winClass == "Button" && rcControl.style.find("BS_AUTORADIOBUTTON") != std::string::npos)
+                return Control::Type::RadioButton;
+            else
+                return Control::Type::Control;
+        case RcControl::Type::Other:
+            return Control::Type::Line;
+        default:
+            throw std::invalid_argument("Unknown RcControl::Type");
     }
 }
 
@@ -44,7 +52,7 @@ bool heightOverlaps(const RcRectDU& lhs, const RcRectDU& rhs)
 
 Control::Control(const RcControl & control)
     : m_control(control)
-    , m_type(toType(control.kind))
+    , m_type(toType(control))
 {}
 
 Control::~Control() = default;
