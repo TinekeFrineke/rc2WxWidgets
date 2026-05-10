@@ -17,6 +17,7 @@ Control::Type toType(const RcControl::Type& rcType)
     case RcControl::Type::RText:
         return Control::Type::StaticText;
     case RcControl::Type::EditText:
+        return Control::Type::EditText;
     case RcControl::Type::ComboBox:
         return Control::Type::ComboBox;
     case RcControl::Type::PushButton:
@@ -177,10 +178,18 @@ std::vector<Control> aggregateLines(std::vector<Control> controls)
         auto& candidate = lineCandidates.front();
         auto candidateInterval = verticalInterval(candidate.m_control.rectDU);
         auto nextCandidate = controls.erase(controls.begin());
-        RcRectDU lineRect = candidate.m_control.rectDU;
+        RcRectDU lineRect;
+        if (nextCandidate->m_control.text == "Aflossingsvrij")
+            lineRect  = candidate.m_control.rectDU;
+        else
+            lineRect = candidate.m_control.rectDU;
         while (nextCandidate != controls.end() && overlap(verticalInterval(nextCandidate->m_control.rectDU), candidateInterval) > 0.75) {
+            const auto nextInterval = verticalInterval(nextCandidate->m_control.rectDU);
+            const auto myOverlap = overlap(candidateInterval, nextInterval); (void)myOverlap;
             lineRect.add(nextCandidate->m_control.rectDU);
             lineCandidates.push_back(std::move(*nextCandidate));
+            if (nextCandidate->m_control.text == "Aflossingsvrij")
+                lineRect = lineRect;
             nextCandidate = controls.erase(nextCandidate);
         }
 

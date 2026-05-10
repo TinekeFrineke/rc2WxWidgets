@@ -4,12 +4,14 @@
 #include <cctype>
 #include <sstream>
 
+#include "CodeBuilder.h"
+
 namespace wxConvert {
 
 namespace {
 
 const std::string idExpr = "wxID_ANY"; // safer default; user can map later
-std::ostream& createControl(const Control& ctl, const std::string& parent, std::ostringstream& c);
+CodeBuilder& createControl(const Control& ctl, const std::string& parent, CodeBuilder& c);
 
 std::string sanitizeIdent(std::string s)
 {
@@ -62,96 +64,111 @@ std::string wxListCtrlStyleFromRc(const std::string& rcStyle)
     return out;
 }
 
-std::ostringstream& createButton(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createButton(const Control& ctl, const std::string& parent, CodeBuilder& c)
 {
-    c << "    {\n";
-    c << "        auto* btn = new wxButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << ");\n";
-    c << "        " << parent << "->Add(btn);\n";
-    if (ctl.m_control.kind == RcControl::Type::DefPushButton) c << "        btn->SetDefault();\n";
-    c << "    }\n";
+    c.stream() << c.pad() << "{\n";
+    c.push();
+    c.stream() << c.pad() << "auto* btn = new wxButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << ");\n";
+    c.stream() << c.pad() << parent << "->Add(btn);\n";
+    if (ctl.m_control.kind == RcControl::Type::DefPushButton) c.stream() << c.pad() << "btn->SetDefault();\n";
+    c.pop();
+    c.stream() << c.pad() << "}\n";
     return c;
 }
 
-std::ostringstream& createStaticText(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createStaticText(const Control& ctl, const std::string& parent, CodeBuilder& c)
 {
-    c << "    " << parent << "->Add(new wxStaticText(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << "));\n";
+    c.stream() << c.pad() << parent << "->Add(new wxStaticText(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text)
+        << "), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);\n";
     return c;
 }
 
-std::ostringstream& createStaticBox(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createStaticBox(const Control& ctl, const std::string& parent, CodeBuilder& c)
 {
-    c << "    {\n";
-    c << "    auto sizer = new wxStaticBoxSizer(wxVERTICAL, this, " << cppStringLiteral(ctl.m_control.text) <<  ");\n";
-    c << "    " << parent << "->Add(sizer); \n";
-    for (const auto& child : ctl.m_children) {
+    c.stream() << c.pad() << "{\n";
+    c.push();
+    c.stream() << c.pad() << "auto sizer = new wxStaticBoxSizer(wxVERTICAL, this, " << cppStringLiteral(ctl.m_control.text) <<  ");\n";
+    auto children(ctl.m_children);
+    std::sort(children.begin(), children.end(), [](const Control& a, const Control& b) {
+        return a.m_control.rectDU.left < b.m_control.rectDU.left;
+    });
+    for (const auto& child : children) {
         createControl(child, "sizer", c);
     }
-    c << "    mainSizer->Add(sizer, 0, wxEXPAND | wxALL, 5);\n";
-    c << "    }\n";
+    c.stream() << c.pad() << parent << "->Add(sizer, 0, wxEXPAND | wxALL, 5);\n";
+    c.pop();
+    c.stream() << c.pad() << "}\n";
     return c;
 }
 
-std::ostream& createEditText(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createEditText(const Control& ctl, const std::string& parent, CodeBuilder& c)
 {
-    c << "    new wxTextCtrl(this, " << idExpr << ", wxEmptyString"
+    c.stream() << c.pad() << "auto editText = new wxTextCtrl(this, " << idExpr << ", \"" << ctl.m_control.id << "\"" //wxEmptyString"
         << ", wxDefaultPosition, wxDefaultSize"
         << ", " << wxTextCtrlStyleFromRc(ctl.m_control.style) << ");\n";
+    c.stream() << c.pad() << parent << "->Add(editText);\n";
     return c;
 }
 
-std::ostream& createLine(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createLine(const Control& ctl, const std::string& parent, CodeBuilder& builder)
 {
-    c << "    {\n";
-    c << "    auto box = new wxBoxSizer(wxHORIZONTAL);\n";
-    for (const auto& child : ctl.m_children) {
-        createControl(child, "box", c);
+    builder.stream() << builder.pad() << "{\n";
+    builder.push();
+    builder.stream() << builder.pad() << "auto box = new wxBoxSizer(wxHORIZONTAL);\n";
+    auto children(ctl.m_children);
+    std::sort(children.begin(), children.end(), [] (const Control& a, const Control& b) {
+        return a.m_control.rectDU.left < b.m_control.rectDU.left;
+              });
+    for (const auto& child : children) {
+        createControl(child, "box", builder);
     }
-    c << "    mainSizer->Add(box, 0, wxEXPAND | wxALL, 5);\n";
-    c << "    }\n";
-    return c;
+    builder.stream() << builder.pad() << parent<< "->Add(box, 0, wxEXPAND | wxALL, 5); \n";
+    builder.pop();
+    builder.stream() << builder.pad()<< "}\n";
+    return builder;
 }
 
-std::ostream& createControl(const Control& ctl, const std::string& parent, std::ostringstream& c)
+CodeBuilder& createControl(const Control& ctl, const std::string& parent, CodeBuilder& builder)
 {
     switch (ctl.m_type) {
         case Control::Type::StaticText:
-            return createStaticText(ctl, parent, c);
+            return createStaticText(ctl, parent, builder);
         case Control::Type::GroupBox:
-            return createStaticBox(ctl, parent, c);
+            return createStaticBox(ctl, parent, builder);
         case Control::Type::Line:
-            return createLine(ctl, parent, c);
+            return createLine(ctl, parent, builder);
         case Control::Type::EditText:
-            return createEditText(ctl, parent, c);
+            return createEditText(ctl, parent, builder);
             break;
         case Control::Type::ComboBox:
-            c << "    " << parent << "->Add(new wxComboBox(this, " << idExpr << ", wxEmptyString));\n";
+            builder.stream() << builder.pad() << parent << "->Add(new wxComboBox(this, " << idExpr << ", wxEmptyString));\n";
             break;
         case Control::Type::PushButton:
-            return createButton(ctl, parent, c);
+            return createButton(ctl, parent, builder);
         case Control::Type::Control:
             if (ctl.m_control.winClass == "SysListView32") {
-                c << "    " << parent << "->Add(new wxListCtrl(this, " << idExpr
+                builder.stream() << builder.pad() << parent << "->Add(new wxListCtrl(this, " << idExpr
                     << ", wxDefaultPosition, wxDefaultSize"
                     << ", " << wxListCtrlStyleFromRc(ctl.m_control.style) << "));\n";
             }
             else if (ctl.m_control.winClass == "SysTabControl32") {
-                c << "    " << parent << "->Add(new wxNotebook(this, " << idExpr << "));\n";
+                builder.stream() << builder.pad() << parent << "->Add(new wxNotebook(this, " << idExpr << "));\n";
             }
             else if (ctl.m_control.winClass == "Button" && containsToken(ctl.m_control.style, "BS_AUTORADIOBUTTON")) {
-                c << "    " << parent << "->Add(new wxRadioButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << "));\n";
+                builder.stream() << builder.pad() << parent << "->Add(new wxRadioButton(this, " << idExpr << ", " << cppStringLiteral(ctl.m_control.text) << "));\n";
             }
             else {
-                c << "    // TODO: CONTROL class " << cppStringLiteral(ctl.m_control.winClass) << "\n";
-                c << "    " << parent << "->Add(new wxWindow(this, " << idExpr << "));\n";
+                builder.stream() << builder.pad() << "// TODO: CONTROL class " << cppStringLiteral(ctl.m_control.winClass) << "\n";
+                builder.stream() << builder.pad() << parent << "->Add(new wxWindow(this, " << idExpr << "));\n";
             }
             break;
         case Control::Type::Icon:
-            c << "    // TODO: ICON " << cppStringLiteral(ctl.m_control.id) << "\n";
+            builder.stream() << builder.pad() << "// TODO: ICON " << cppStringLiteral(ctl.m_control.id) << "\n";
             break;
         default:
             throw std::invalid_argument("Unknown control type");
     }
-    return c;
+    return builder;
 }
 
 } // namespace
@@ -203,8 +220,9 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
     c << "    SetClientSize(ConvertDialogToPixels(wxSize(" << dialog.rectDU.width << ", " << dialog.rectDU.height << ")));\n\n";
     c << "    auto* mainSizer = new wxBoxSizer(wxVERTICAL);\n";
 
+    CodeBuilder builder(c);
     for (const auto& ctl : dialog.controls) {
-        createControl(ctl, "mainSizer", c);
+        createControl(ctl, "mainSizer", builder);
     }
 
     c << "    SetSizerAndFit(mainSizer);\n";
@@ -216,5 +234,10 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
     out.source = c.str();
     return out;
 }
+
+//std::string WxEmitter::indent() const
+//{
+//    return std::string(m_indent, ' ');
+//}
 
 } // namespace wxConvert

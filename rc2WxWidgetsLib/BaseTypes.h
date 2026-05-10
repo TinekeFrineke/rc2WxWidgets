@@ -11,11 +11,20 @@ struct Interval
     constexpr int length() const noexcept { return to - from; }
 };
 
-inline int overlap(const Interval& a, const Interval& b)
+inline double overlap(const Interval& a, const Interval& b)
 {
+    int minFrom = std::min(a.from, b.from);
     int maxFrom = std::max(a.from, b.from);
     int minTo = std::min(a.to, b.to);
+    int maxTo = std::min(a.to, b.to);
     return std::max(0, minTo - maxFrom);
+
+    //const int minFrom = std::min(a.from, b.from);
+    //const int maxFrom = std::max(a.from, b.from);
+    //const int minTo = std::min(a.to, b.to);
+    //const int maxTo = std::max(a.to, b.to);
+    //const double outcome = double(std::abs(minTo - maxFrom)) / std::abs(maxTo - minFrom);
+    //return outcome;
 }
 
 inline bool overlaps(const Interval& a, const Interval& b) noexcept
