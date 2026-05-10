@@ -11,19 +11,31 @@ struct Interval
     constexpr int length() const noexcept { return to - from; }
 };
 
-inline double overlap(const Interval& a, const Interval& b)
+inline double overlapRatio(const Interval& a, const Interval& b)
 {
-    int minFrom = std::min(a.from, b.from);
-    int maxFrom = std::max(a.from, b.from);
-    int minTo = std::min(a.to, b.to);
-    int maxTo = std::min(a.to, b.to);
-    return std::max(0, minTo - maxFrom);
+    const int overlap = std::max(0,
+                                 std::min(a.to, b.to) - std::max(a.from, b.from));
+
+    const int denom = std::min(a.length(), b.length());
+
+    if (denom == 0)
+        return 0.0;
+
+    const double outcome{ overlap / static_cast<double>(denom) };
+    return outcome;
+    ////int minFrom = std::min(a.from, b.from);
+    ////int maxFrom = std::max(a.from, b.from);
+    ////int minTo = std::min(a.to, b.to);
+    ////int maxTo = std::min(a.to, b.to);
+    ////return std::max(0, minTo - maxFrom);
 
     //const int minFrom = std::min(a.from, b.from);
     //const int maxFrom = std::max(a.from, b.from);
     //const int minTo = std::min(a.to, b.to);
     //const int maxTo = std::max(a.to, b.to);
-    //const double outcome = double(std::abs(minTo - maxFrom)) / std::abs(maxTo - minFrom);
+    //const int largest = std::max(a.length(), b.length());
+    //const int actualOverlap(Interval(maxFrom, minTo).length());
+    //const double outcome = actualOverlap / static_cast<double>(largest);
     //return outcome;
 }
 
@@ -34,25 +46,25 @@ inline bool overlaps(const Interval& a, const Interval& b) noexcept
     return maxFrom < minTo;
 }
 
-// return percentage of overlap with smallest interval as 100% (e.g. 0.5 for half overlap, 1.0 for full overlap, >1.0 for more than full)
-inline double overlap(std::vector<Interval>& intervals)
-{
-    std::sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) {
-        return a.length() < b.length();
-    });
-
-    double totalOverlap = 0.0;
-    for (size_t i = 0; i < intervals.size(); ++i) {
-        for (size_t j = i + 1; j < intervals.size(); ++j) {
-            if (overlaps(intervals[i], intervals[j])) {
-                int maxFrom = std::max(intervals[i].from, intervals[j].from);
-                int minTo = std::min(intervals[i].to, intervals[j].to);
-                totalOverlap += static_cast<double>(minTo - maxFrom);
-            }
-        }
-    }
-    return totalOverlap;
-}
+//// return percentage of overlap with smallest interval as 100% (e.g. 0.5 for half overlap, 1.0 for full overlap, >1.0 for more than full)
+//inline double overlap(std::vector<Interval>& intervals)
+//{
+//    std::sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) {
+//        return a.length() < b.length();
+//    });
+//
+//    double totalOverlap = 0.0;
+//    for (size_t i = 0; i < intervals.size(); ++i) {
+//        for (size_t j = i + 1; j < intervals.size(); ++j) {
+//            if (overlaps(intervals[i], intervals[j])) {
+//                int maxFrom = std::max(intervals[i].from, intervals[j].from);
+//                int minTo = std::min(intervals[i].to, intervals[j].to);
+//                totalOverlap += static_cast<double>(minTo - maxFrom);
+//            }
+//        }
+//    }
+//    return totalOverlap;
+//}
 
 struct RcRectDU
 {

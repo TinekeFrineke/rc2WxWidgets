@@ -93,7 +93,10 @@ CodeBuilder& createStaticBox(const Control& ctl, const std::string& parent, Code
         return a.m_control.rectDU.left < b.m_control.rectDU.left;
     });
     for (const auto& child : children) {
-        createControl(child, "sizer", c);
+        if (child.m_type == Control::Type::PushButton)
+            createControl(child, "sizer", c);
+        else
+            createControl(child, "sizer", c);
     }
     c.stream() << c.pad() << parent << "->Add(sizer, 0, wxEXPAND | wxALL, 5);\n";
     c.pop();
@@ -222,7 +225,12 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
 
     CodeBuilder builder(c);
     for (const auto& ctl : dialog.controls) {
-        createControl(ctl, "mainSizer", builder);
+        if (ctl.m_control.kind == RcControl::Type::DefPushButton)
+            createControl(ctl, "mainSizer", builder);
+        else if (ctl.m_control.kind == RcControl::Type::PushButton)
+            createControl(ctl, "mainSizer", builder);
+        else
+            createControl(ctl, "mainSizer", builder);
     }
 
     c << "    SetSizerAndFit(mainSizer);\n";
@@ -234,10 +242,5 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
     out.source = c.str();
     return out;
 }
-
-//std::string WxEmitter::indent() const
-//{
-//    return std::string(m_indent, ' ');
-//}
 
 } // namespace wxConvert
