@@ -98,6 +98,47 @@ std::string unquote(std::string s)
     return s;
 }
 
+
+std::string camelCasualize(const std::string& string)
+{
+    if (string.empty())
+        throw std::invalid_argument("camelCasualize: string is empty");
+    auto newName = Str::ToLower(string);
+    newName[0] = std::toupper(newName[0]);
+    return newName;
+}
+
+std::string beautifyDialogName(const std::string& resourceId)
+{
+    if (resourceId.empty())
+        throw std::invalid_argument("beautifyDialogName: Resource ID is empty");
+    auto tokens = Str::StrTok(resourceId, "_");
+    if (tokens.size() < 2)
+        throw std::invalid_argument("Resource ID " + resourceId + " is invalid");
+    tokens.erase(tokens.begin());
+
+    std::string name;
+    for (const auto& token : tokens)
+        name += camelCasualize(token);
+
+    return name;
+}
+std::string createMemberName(const std::string& resourceId)
+{
+    if (resourceId.empty())
+        throw std::invalid_argument("beautifyDialogName: Resource ID is empty");
+    auto tokens = Str::StrTok(resourceId, "_");
+    if (tokens.empty())
+        throw std::invalid_argument("Resource ID " + resourceId + " is invalid");
+
+    std::string name{ "m_" + Str::ToLower(tokens.front()) };
+    tokens.erase(tokens.begin());
+    for (const auto& token : tokens)
+        name += camelCasualize(token);
+
+    return name;
+}
+
 std::optional<RcControl> parseControlLine(const std::string& line)
 {
     auto l = trim(line);
@@ -148,6 +189,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
     if (c.kind == RcControl::Type::EditText) {
         if (args.size() < 5) return std::nullopt;
         c.id = trim(args[0]);
+        c.memberName = createMemberName(trim(args[0]));
         c.rectDU = { toInt(args[1]), toInt(args[2]), toInt(args[3]), toInt(args[4]) };
         if (args.size() > 5) c.style = joinTail(5);
         return c;
@@ -157,6 +199,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         // COMBOBOX id,x,y,w,h[,style...]
         if (args.size() < 5) return std::nullopt;
         c.id = trim(args[0]);
+        c.memberName = createMemberName(trim(args[0]));
         c.rectDU = { toInt(args[1]), toInt(args[2]), toInt(args[3]), toInt(args[4]) };
         if (args.size() > 5) c.style = joinTail(5);
         return c;
@@ -166,6 +209,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
         if (args.size() < 8) return std::nullopt;
         c.text = unquote(args[0]);
         c.id = trim(args[1]);
+        c.memberName = createMemberName(trim(args[1]));
         c.winClass = unquote(args[2]);
         c.style = trim(args[3]);
         c.rectDU = { toInt(args[4]), toInt(args[5]), toInt(args[6]), toInt(args[7]) };
@@ -179,6 +223,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
     if (c.kind == RcControl::Type::Icon) {
         if (args.size() < 6) return std::nullopt;
         c.id = trim(args[0]); // icon resource id
+        c.memberName = createMemberName(trim(args[0]));
         c.text = trim(args[1]); // usually IDC_STATIC
         c.rectDU = { toInt(args[2]), toInt(args[3]), toInt(args[4]), toInt(args[5]) };
         if (args.size() > 6) c.style = joinTail(6);
@@ -189,6 +234,7 @@ std::optional<RcControl> parseControlLine(const std::string& line)
     if (args.size() < 6) return std::nullopt;
     c.text = unquote(args[0]);
     c.id = trim(args[1]);
+    c.memberName = createMemberName(trim(args[1]));
     c.rectDU = { toInt(args[2]), toInt(args[3]), toInt(args[4]), toInt(args[5]) };
     if (args.size() > 6) c.style = joinTail(6);
     return c;
@@ -216,38 +262,14 @@ void parseDialogContent(std::istream& input, RcDialog& dialog)
 {
     std::string line;
     while (getLine(input, line) && !isEnd(line)) {
+#ifdef LOG_PARSE_DIALOG_CONTENT
         std::cout << "parseDialogContent() line " << line << '\n';
+#endif
         auto control = parseControlLine(line);
         if (control)
             dialog.controls.push_back(*control);
     }
 }
-
-namespace {
-std::string camelCasualize(const std::string& string)
-{
-    if (string.empty())
-        throw std::invalid_argument("camelCasualize: string is empty");
-    auto newName = Str::ToLower(string);
-    newName[0] = std::toupper(newName[0]);
-    return newName;
-}
-std::string beautifyDialogName(const std::string& resourceId)
-{
-    if (resourceId.empty())
-        throw std::invalid_argument("beautifyDialogName: Resource ID is empty");
-    auto tokens = Str::StrTok(resourceId, "_");
-    if (tokens.size() < 2)
-        throw std::invalid_argument("Resource ID " + resourceId + " is invalid");
-    tokens.erase(tokens.begin());
-
-    std::string name;
-    for (const auto& token : tokens)
-        name += camelCasualize(token);
-
-    return name;
-}
-} // namespace
 
 std::unique_ptr<RcDialog> createDialogFromTokens(const std::vector<std::string>& tokens, std::istream& input)
 {
@@ -260,7 +282,9 @@ std::unique_ptr<RcDialog> createDialogFromTokens(const std::vector<std::string>&
 
     std::string line;
     while (getLine(input, line)/* && !isEnd(line)*/) {
+#ifdef LOG_CREATE_DIALOG_FROM_TOKENS
         std::cout << "createDialogFromTokens() line " << line << '\n';
+#endif
         if (startsWith(line, "STYLE")) {
             auto p = line.find(' ');
             dialog->style = trim(p == std::string::npos ? "" : line.substr(p + 1));
@@ -295,7 +319,7 @@ std::unique_ptr<RcDialog> createDialogFromTokens(const std::vector<std::string>&
     return dialog;
 }
 
-}
+} // namespace
 
 RcFile RcParser::parse(std::istream& in) const
 {
@@ -316,7 +340,9 @@ std::unique_ptr<RcDialog> RcParser::parseDialog(std::istream& in) const
     std::unique_ptr<RcDialog> curDlg;
 
     while (getLine(in, raw)) {
+#ifdef LOG_PARSER
         std::cout << "RcParser::parseDialog() line " << raw << '\n';
+#endif
         std::string line = trim(stripLineComment(raw));
         if (line.empty()) continue;
 

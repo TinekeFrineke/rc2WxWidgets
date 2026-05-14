@@ -15,7 +15,7 @@ namespace wxConvert {
 
 Converter::Converter(std::string input, std::string output)
     : m_input(std::move(input))
-    , m_output(std::move(output))
+    , m_cppStream(std::move(output))
 {
 }
 
@@ -47,7 +47,7 @@ void Converter::convert()
 
     std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
 
-    fs::path outDir(m_output);
+    fs::path outDir(m_cppStream);
     fs::create_directories(outDir);
 
     for (const auto& rcDialog : rc.dialogs) {

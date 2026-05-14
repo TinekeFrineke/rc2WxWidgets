@@ -36,6 +36,7 @@ struct RcControl
     Type kind = Type::Unknown;
     std::string text;      // may be empty
     std::string id;        // e.g. IDC_FOO or IDOK
+    std::string memberName;
     std::string winClass;  // for CONTROL lines, e.g. "SysListView32"
     std::string style;     // raw style/exstyle token tail
     RcRectDU rectDU{};

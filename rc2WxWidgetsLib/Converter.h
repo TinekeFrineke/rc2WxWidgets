@@ -14,7 +14,7 @@ public:
 
 private:
     std::string m_input;
-    std::string m_output;
+    std::string m_cppStream;
 };
 
 } // namespace wxConvert

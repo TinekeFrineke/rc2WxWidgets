@@ -9,14 +9,20 @@ namespace {
 int tabSize = 4;
 } // namespace
 
-CodeBuilder::CodeBuilder(std::ostream& output)
-    : m_output(output)
+CodeBuilder::CodeBuilder(std::ostream& cppStream, std::ostream& headerStream)
+    : m_cppStream(cppStream)
+    , m_headerStream(headerStream)
 {
 }
 
-std::ostream& CodeBuilder::stream()
+std::ostream& CodeBuilder::cppStream()
 {
-    return m_output;
+    return m_cppStream;
+}
+
+std::ostream& CodeBuilder::headerStream()
+{
+    return m_headerStream;
 }
 
 std::string CodeBuilder::pad() const
