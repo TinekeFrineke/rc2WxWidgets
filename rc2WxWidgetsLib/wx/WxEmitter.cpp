@@ -108,10 +108,8 @@ CodeBuilder& createStaticBox(const Control& ctl, const std::string& parent, Code
 CodeBuilder& createEditText(const Control& ctl, const std::string& parent, CodeBuilder& builder)
 {
     builder.headerStream() << "    wxTextCtrl* " << ctl.m_control.memberName << ";\n";
-    builder.cppStream() << builder.pad() << ctl.m_control.memberName << " = new wxTextCtrl(this, " << idExpr << ", wxEmptyString"
-        << ", wxDefaultPosition, wxDefaultSize"
-        << ", " << wxTextCtrlStyleFromRc(ctl.m_control.style) << ");\n";
-    builder.cppStream() << builder.pad() << ctl.m_control.memberName << "->SetMinSize(wxSize(150, -1));\n";
+    builder.cppStream() << builder.pad() << ctl.m_control.memberName << " = new wxTextCtrl(this, " << idExpr << ");\n";
+    //builder.cppStream() << builder.pad() << ctl.m_control.memberName << "->SetMinSize(wxSize(150, -1));\n";
     builder.cppStream() << builder.pad() << parent << "->Add(" << ctl.m_control.memberName << ", 2, wxEXPAND);\n";
     return builder;
 }
@@ -146,6 +144,7 @@ CodeBuilder& createComboBox(const Control& ctl, const std::string& parent, CodeB
 {
     builder.headerStream() << "    wxComboBox* " << ctl.m_control.memberName << ";\n";
     builder.cppStream() << builder.pad() << ctl.m_control.memberName << " = new wxComboBox(this, " << idExpr << ", wxEmptyString);\n";
+    builder.cppStream() << builder.pad() << ctl.m_control.memberName << "->SetMinSize(wxSize(250, -1));\n";
     builder.cppStream() << builder.pad() << parent << "->Add(" << ctl.m_control.memberName << "); \n";
     return builder;
 }
@@ -239,13 +238,16 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
     }
 
     if (dialog.fontPointSize > 0 && !dialog.fontFace.empty()) {
-        source << "    SetFont(wxFontInfo(" << dialog.fontPointSize << ").FaceName("
+        source << "    SetFont(wxFontInfo(" << dialog.fontPointSize * 15 / 10 << ").FaceName("
             << cppStringLiteral(dialog.fontFace) << "));\n";
     }
 
     // Size in dialog units; let wx convert to pixels.
     source << "    SetClientSize(ConvertDialogToPixels(wxSize(" << dialog.rectDU.width << ", " << dialog.rectDU.height << ")));\n\n";
     source << "    auto* mainSizer = new wxBoxSizer(wxVERTICAL);\n";
+
+    header << "    explicit " << cls << "(wxWindow* parent);\n\n";
+    header << "protected:\n";
 
     CodeBuilder builder(source, header);
     for (const auto& ctl : dialog.controls) {
@@ -257,7 +259,6 @@ WxEmitResult WxEmitter::emit(const Dialog& dialog) const
 
     source << "}\n\n";
 
-    header << "    explicit " << cls << "(wxWindow* parent);\n";
     header << "};\n\n";
 
     out.header = header.str();

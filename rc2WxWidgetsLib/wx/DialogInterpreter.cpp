@@ -194,7 +194,6 @@ std::vector<Control> aggregateLines(std::vector<Control> controls)
             lineRect = candidate.m_control.rectDU;
         while (nextCandidate != controls.end() && overlapRatio(verticalInterval(nextCandidate->m_control.rectDU), candidateInterval) > 0.5) {
             const auto nextInterval = verticalInterval(nextCandidate->m_control.rectDU);
-            const auto myOverlap = overlapRatio(candidateInterval, nextInterval); (void)myOverlap;
             lineRect.add(nextCandidate->m_control.rectDU);
             lineCandidates.push_back(std::move(*nextCandidate));
             if (nextCandidate->m_control.text == "Delete")

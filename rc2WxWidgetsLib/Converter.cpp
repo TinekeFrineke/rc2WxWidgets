@@ -13,16 +13,33 @@
 
 namespace wxConvert {
 
-Converter::Converter(std::string input, std::string output)
+namespace {
+
+std::filesystem::path createSourceDir(const std::string& output, const std::string& projectName) {
+    std::filesystem::path sourceDir = std::filesystem::path(output);
+    sourceDir /= projectName;
+    sourceDir /= "src";
+    return sourceDir;
+}
+
+std::filesystem::path createHeaderDir(const std::string& output, const std::string& projectName) {
+    std::filesystem::path headerDir = std::filesystem::path(output);
+    headerDir /= projectName;
+    headerDir /= "include";
+    headerDir /= projectName;
+    return headerDir;
+}
+} // namespace
+
+Converter::Converter(std::string input, std::string output, std::string projectName)
     : m_input(std::move(input))
-    , m_cppStream(std::move(output))
+    , m_output(std::move(output))
+    , m_projectName(std::move(projectName))
 {
 }
 
 void Converter::convert()
 {
-    namespace fs = std::filesystem;
-
     auto currentPath(std::filesystem::current_path());
     std::string textUtf8;
     try {
@@ -47,8 +64,10 @@ void Converter::convert()
 
     std::cout << "Parsed dialogs: " << rc.dialogs.size() << "\n";
 
-    fs::path outDir(m_cppStream);
-    fs::create_directories(outDir);
+    std::filesystem::path cppDir{createSourceDir(m_output, m_projectName)};
+    std::filesystem::path headerDir{createHeaderDir(m_output, m_projectName)};
+    std::filesystem::create_directories(cppDir);
+    std::filesystem::create_directories(headerDir);
 
     for (const auto& rcDialog : rc.dialogs) {
         auto wxDialog = dialogInterpreter::interpret(rcDialog);
@@ -58,18 +77,18 @@ void Converter::convert()
 
         std::string outHeaderFile = result.className + ".h";
         {
-            std::ofstream hpp(outDir / outHeaderFile, std::ios::binary);
+            std::ofstream hpp(headerDir / outHeaderFile, std::ios::binary);
             if (!hpp) throw std::runtime_error("Could not write " + outHeaderFile);
             hpp << result.header;
         }
         std::string outSourceFile = result.className + ".cpp";
         {
-            std::ofstream cpp(outDir / outSourceFile, std::ios::binary);
+            std::ofstream cpp(cppDir / outSourceFile, std::ios::binary);
             if (!cpp) throw std::runtime_error("Could not write " + outSourceFile);
             cpp << result.source;
         }
-        std::cout << "Wrote: " << (outDir / outHeaderFile).string() << "\n";
-        std::cout << "Wrote: " << (outDir / outSourceFile).string() << "\n";
+        std::cout << "Wrote: " << (cppDir / outHeaderFile).string() << "\n";
+        std::cout << "Wrote: " << (cppDir / outSourceFile).string() << "\n";
     }
     std::cout << "Wrote " << rc.dialogs.size() << " dialogs\n";
 
